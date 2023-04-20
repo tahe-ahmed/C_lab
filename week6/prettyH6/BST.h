@@ -1,0 +1,205 @@
+#include "Node.h"
+
+class BST {
+public:
+  BST();
+  ~BST();
+  void insertKey(int newKey);
+  bool hasKey(int searchKey);
+  std::vector<int> inOrder();
+  int getHeight();
+  void prettyPrint();
+
+private:
+  std::vector<int> inOrderVector;
+  Node *root;
+  std::vector<std::vector<int>> matrix;
+  std::vector<int> widthVector;
+
+  Node *constructorHelper();
+  void freeMemory(Node *root);
+  Node *createNode(int data);
+  void prettyPrintHelper(Node *root, int treeHeight, int treeWidth);
+  int getHeightHelper(Node *root);
+  std::vector<int> inOrderHelper(Node *root);
+  int getTreeWidth(Node *root, int level);
+  void levelOrderTrans(Node *root, int level, int depth);
+  void printMatrix(int row, int col);
+  void fillMatrix(int row, int col);
+  bool hasKeyHelper(Node *root, int searchKey);
+  void insertKeyHelper(Node **root, int newKey);
+  int findIndex(int key);
+};
+
+void BST::prettyPrint() {
+
+  int treeWidth = getTreeWidth(root, 1);
+  int treeHeight = getHeightHelper(root);
+
+  prettyPrintHelper(root, treeHeight, treeWidth);
+}
+
+void BST::prettyPrintHelper(Node *root, int treeHeight, int treeWidth) {
+
+  fillMatrix(treeHeight, treeWidth);
+
+  for (int i = 1; i <= treeHeight; i++) {
+    levelOrderTrans(root, i, i);
+  }
+
+  printMatrix(getHeight(), treeWidth);
+}
+
+void BST::printMatrix(int row, int col) {
+  if (row == 0 && col == 0)
+    return;
+
+  std::cout << std::setfill('-') << std::setw((5 * col) + 1) << "" << std::endl;
+  std::cout << std::setfill(' ');
+
+  for (int i = 0; i < row; ++i) {
+    for (int j = 0; j < col; ++j) {
+      if (matrix.at(i).at(j) == std::numeric_limits<int>::max()) {
+        std::cout << "|" << std::setw(5);
+
+      } else {
+        std::cout << "|" << std::setw(4) << matrix.at(i).at(j);
+      }
+    }
+    std::cout << "|";
+    std::cout << std::endl;
+
+    std::cout << std::setfill('-') << std::setw((5 * col) + 1) << ""
+              << std::endl;
+    std::cout << std::setfill(' ');
+  }
+}
+
+void BST::fillMatrix(int row, int col) {
+  for (int i = 0; i < row; ++i) {
+    for (int j = 0; j < col; ++j) {
+      std::vector<int> vec(col, std::numeric_limits<int>::max());
+      matrix.push_back(vec);
+    }
+  }
+}
+
+int BST::findIndex(int key) {
+  for (int i = 0; i < widthVector.size(); ++i) {
+    if (widthVector.at(i) == key) {
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
+void BST::levelOrderTrans(Node *root, int level, int depth) {
+
+  if (root == nullptr) {
+    return;
+  } else if (level == 1) {
+    int index = findIndex(root->data);
+    matrix.at(depth - 1).at(index - 1) = root->data;
+  } else {
+    levelOrderTrans(root->left, level - 1, depth);
+    levelOrderTrans(root->right, level - 1, depth);
+  }
+}
+
+BST::BST() { constructorHelper(); }
+
+Node *BST::constructorHelper() { return root; }
+
+BST::~BST() { freeMemory(this->root); }
+
+Node *BST::createNode(int data) {
+  Node *newNode = new Node();
+  newNode->data = data;
+  newNode->left = newNode->right = NULL;
+  return newNode;
+}
+
+void BST::freeMemory(Node *root) {
+  if (root == nullptr) {
+    return;
+  } else {
+    freeMemory(root->left);
+    freeMemory(root->right);
+    delete root;
+  }
+}
+
+void BST::insertKey(int newKey) { insertKeyHelper(&(this->root), newKey); }
+
+void BST::insertKeyHelper(Node **root, int newKey) {
+  if (*root == nullptr) {
+    *root = createNode(newKey);
+    return;
+  }
+
+  if (newKey < (*root)->data) {
+    insertKeyHelper(&(*root)->left, newKey);
+  } else {
+    insertKeyHelper(&(*root)->right, newKey);
+  }
+}
+
+int BST::getTreeWidth(Node *root, int maxWidth) {
+  if (root == nullptr) {
+    return --maxWidth;
+  } else {
+    return getTreeWidth(root->left, ++maxWidth) + getTreeWidth(root->right, 1);
+  }
+}
+
+int BST::getHeight() { return getHeightHelper(this->root); }
+
+int BST::getHeightHelper(Node *root) {
+  if (root == nullptr)
+    return 0;
+  else {
+    int leftHeight = getHeightHelper(root->left);
+    int rightHeight = getHeightHelper(root->right);
+
+    leftHeight = leftHeight + 1;
+    rightHeight = rightHeight + 1;
+
+    return leftHeight > rightHeight ? leftHeight : rightHeight;
+  }
+}
+
+std::vector<int> BST::inOrder() { return inOrderHelper(this->root); }
+
+std::vector<int> BST::inOrderHelper(Node *root) {
+  if (root == nullptr) {
+    return inOrderVector;
+
+  } else {
+    inOrderHelper(root->left);
+
+    inOrderVector.push_back(root->data);
+    widthVector.push_back(root->data);
+
+    inOrderHelper(root->right);
+
+    return inOrderVector;
+  }
+}
+
+bool BST::hasKey(int searchKey) { return hasKeyHelper(this->root, searchKey); }
+
+bool BST::hasKeyHelper(Node *root, int searchKey) {
+  if (root == nullptr) {
+    return false;
+  }
+
+  if (root->data == searchKey) {
+    return true;
+  }
+
+  if (searchKey <= root->data) {
+    return hasKeyHelper(root->left, searchKey);
+  } else {
+    return hasKeyHelper(root->right, searchKey);
+  }
+}
